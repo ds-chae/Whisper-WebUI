@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 import gradio as gr
 from modules.whisper_Inference import WhisperInference
 from modules.nllb_inference import NLLBInference
@@ -77,7 +78,7 @@ with block:
                 btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
             with gr.Row():
                 tb_indicator = gr.Textbox(label="Output")
-                btn_openfolder = gr.Button('?��').style(full_width=False)
+                btn_openfolder = gr.Button('?��').style(full_width=False)
 
             btn_run.click(fn=whisper_inf.transcribe_file,
                           inputs=[input_file, dd_model, dd_lang, dd_subformat, cb_translate], outputs=[tb_indicator])
@@ -104,7 +105,7 @@ with block:
                 btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
             with gr.Row():
                 tb_indicator = gr.Textbox(label="Output")
-                btn_openfolder = gr.Button('?��').style(full_width=False)
+                btn_openfolder = gr.Button('?��').style(full_width=False)
 
             btn_run.click(fn=whisper_inf.transcribe_youtube,
                           inputs=[tb_youtubelink, dd_model, dd_lang, dd_subformat, cb_translate],
@@ -128,7 +129,7 @@ with block:
                 btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
             with gr.Row():
                 tb_indicator = gr.Textbox(label="Output")
-                btn_openfolder = gr.Button('?��').style(full_width=False)
+                btn_openfolder = gr.Button('?��').style(full_width=False)
 
             btn_run.click(fn=whisper_inf.transcribe_mic,
                           inputs=[mic_input, dd_model, dd_lang, dd_subformat, cb_translate], outputs=[tb_indicator])
@@ -150,7 +151,7 @@ with block:
                     btn_run = gr.Button("TRANSLATE SUBTITLE FILE", variant="primary")
                 with gr.Row():
                     tb_indicator = gr.Textbox(label="Output")
-                    btn_openfolder = gr.Button('?��').style(full_width=False)
+                    btn_openfolder = gr.Button('?��').style(full_width=False)
                 with gr.Column():
                     md_vram_table = gr.HTML(NLLB_VRAM_TABLE, elem_id="md_nllb_vram_table")
 
@@ -170,7 +171,7 @@ async def fastapi_transcribe_file(paramTranscribeFile: TranscribeFile):
     fileobjs = [fileobj]
     tb_indicator = whisper_inf.transcribe_file1(fileobjs, paramTranscribeFile.dd_model,
         paramTranscribeFile.dd_lang, paramTranscribeFile.dd_subformat, paramTranscribeFile.cb_translate, progress=fapi_progress)
-    return {  # 측정결과 코드 �?메시지
+    return {  # 측정결과 코드 �?메시지
         'result_type': 0,
         'result_msg': tb_indicator,
     }
