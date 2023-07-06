@@ -37,16 +37,21 @@ class WhisperInference(BaseInterface):
 
             files_info = {}
             for fileobj in fileobjs:
+                print('transcribe_file:{}'.format(fileobj.name))
 
                 audio = whisper.load_audio(fileobj.name)
 
                 translatable_model = ["large", "large-v1", "large-v2"]
+                stt = datetime.now()
+                print('Transcribe start {}'.format(stt))
                 if istranslate and self.current_model_size in translatable_model:
                     result = self.model.transcribe(audio=audio, language=lang, verbose=False, task="translate",
                                                    progress_callback=progress_callback)
                 else:
                     result = self.model.transcribe(audio=audio, language=lang, verbose=False,
                                                    progress_callback=progress_callback)
+                ett = datetime.now()
+                print('Transcribe finished {}, elapsed {}'.format(ett, ett-stt))
 
                 progress(1, desc="Completed!")
 
@@ -77,6 +82,75 @@ class WhisperInference(BaseInterface):
         finally:
             self.release_cuda_memory()
             self.remove_input_files([fileobj.name for fileobj in fileobjs])
+
+    def transcribe_file1(self, fileobjs,
+                        model_size, lang, subformat, istranslate,
+                        progress):
+
+        def progress_callback(progress_value):
+            progress(progress_value, desc="Transcribing..")
+
+        try:
+            if model_size != self.current_model_size or self.model is None:
+                progress(0, desc="Initializing Model..")
+                self.current_model_size = model_size
+                self.model = whisper.load_model(name=model_size, download_root=os.path.join("models", "Whisper"))
+
+            if lang == "Automatic Detection" or lang == "":
+                lang = None
+
+            progress(0, desc="Loading Audio..")
+
+            files_info = {}
+            for fileobj in fileobjs:
+                print('transcribe_file1:{}'.format(fileobj['name']))
+
+                audio = whisper.load_audio(fileobj['name'])
+
+                translatable_model = ["large", "large-v1", "large-v2"]
+                stt = datetime.now()
+                print('Transcribe1 start {}'.format(stt))
+                if istranslate and self.current_model_size in translatable_model:
+                    result = self.model.transcribe(audio=audio, language=lang, verbose=False, task="translate",
+                                                   progress_callback=progress_callback)
+                else:
+                    result = self.model.transcribe(audio=audio, language=lang, verbose=False,
+                                                   progress_callback=progress_callback)
+                ett = datetime.now()
+                print('Transcribe finished {}, elapsed {}'.format(ett, ett-stt))
+
+                progress(1, desc="Completed!")
+
+                file_name, file_ext = os.path.splitext(os.path.basename(fileobj['orig_name']))
+                file_name = file_name[:-9]
+                file_name = safe_filename(file_name)
+                timestamp = datetime.now().strftime("%m%d%H%M%S")
+                output_path = os.path.join("outputs", f"{file_name}-{timestamp}")
+
+                if subformat == "SRT":
+                    subtitle = get_srt(result["segments"])
+                    write_file(subtitle, f"{output_path}.srt")
+                elif subformat == "WebVTT":
+                    subtitle = get_vtt(result["segments"])
+                    write_file(subtitle, f"{output_path}.vtt")
+                else:
+                    return f"Error:subformat should be 'SRT' or 'WebVTT'"
+
+                files_info[file_name] = subtitle
+
+            total_result = ''
+            for file_name, subtitle in files_info.items():
+                total_result += '------------------------------------\n'
+                #total_result += f'{file_name}\n\n'
+                total_result += f'{subtitle}'
+
+            return f"Done!\n\n{total_result}"
+        except Exception as e:
+            return f"Error: {str(e)}"
+        finally:
+            self.release_cuda_memory()
+            #self.remove_input_files([fileobj['name'] for fileobj in fileobjs])
+
 
     def transcribe_youtube(self, youtubelink,
                            model_size, lang, subformat, istranslate,

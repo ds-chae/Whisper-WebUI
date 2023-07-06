@@ -6,12 +6,39 @@ from ui.htmls import *
 from modules.youtube_manager import get_ytmetas
 import argparse
 
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List, Union
+
+app = FastAPI()
+
+class TranscribeFile(BaseModel):
+    input_file : Union[str, None] = None
+    dd_model : Union[str, None] = None
+    dd_lang : Union[str, None] = None
+    dd_subformat : Union[str, None] = None
+    cb_translate : Union[str, None] = None
+
+class PredictionRequest(BaseModel):
+    input: str
+
+class PredictionResponse(BaseModel):
+    output: str
+
+@app.post("/predict", response_model=PredictionResponse)
+def predict(request: PredictionRequest):
+    # Add your prediction logic here
+    output = "Your prediction result"
+
+    return PredictionResponse(output=output)
+
+from datetime import datetime
+
 # Create the parser
 parser = argparse.ArgumentParser()
 parser.add_argument('--share', type=bool, default=False, nargs='?', const=True,
                     help='Share value')
 args = parser.parse_args()
-
 
 def open_folder(folder_path):
     if os.path.exists(folder_path):
@@ -50,7 +77,7 @@ with block:
                 btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
             with gr.Row():
                 tb_indicator = gr.Textbox(label="Output")
-                btn_openfolder = gr.Button('ðŸ“‚').style(full_width=False)
+                btn_openfolder = gr.Button('?“‚').style(full_width=False)
 
             btn_run.click(fn=whisper_inf.transcribe_file,
                           inputs=[input_file, dd_model, dd_lang, dd_subformat, cb_translate], outputs=[tb_indicator])
@@ -77,7 +104,7 @@ with block:
                 btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
             with gr.Row():
                 tb_indicator = gr.Textbox(label="Output")
-                btn_openfolder = gr.Button('ðŸ“‚').style(full_width=False)
+                btn_openfolder = gr.Button('?“‚').style(full_width=False)
 
             btn_run.click(fn=whisper_inf.transcribe_youtube,
                           inputs=[tb_youtubelink, dd_model, dd_lang, dd_subformat, cb_translate],
@@ -101,7 +128,7 @@ with block:
                 btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
             with gr.Row():
                 tb_indicator = gr.Textbox(label="Output")
-                btn_openfolder = gr.Button('ðŸ“‚').style(full_width=False)
+                btn_openfolder = gr.Button('?“‚').style(full_width=False)
 
             btn_run.click(fn=whisper_inf.transcribe_mic,
                           inputs=[mic_input, dd_model, dd_lang, dd_subformat, cb_translate], outputs=[tb_indicator])
@@ -123,7 +150,7 @@ with block:
                     btn_run = gr.Button("TRANSLATE SUBTITLE FILE", variant="primary")
                 with gr.Row():
                     tb_indicator = gr.Textbox(label="Output")
-                    btn_openfolder = gr.Button('ðŸ“‚').style(full_width=False)
+                    btn_openfolder = gr.Button('?“‚').style(full_width=False)
                 with gr.Column():
                     md_vram_table = gr.HTML(NLLB_VRAM_TABLE, elem_id="md_nllb_vram_table")
 
@@ -132,8 +159,34 @@ with block:
                           outputs=[tb_indicator])
             btn_openfolder.click(fn=lambda: open_folder(os.path.join("outputs", "translations")), inputs=None, outputs=None)
 
+def fapi_progress(prog, desc):
+    print('\nfapi_progress:{} {}'.format(prog, desc))
+
+@app.post('/transcribe_file')  # http://192.168.7.188:5001/transcribe_file
+async def fastapi_transcribe_file(paramTranscribeFile: TranscribeFile):
+    fileobj = {}
+    fileobj['name'] = paramTranscribeFile.input_file
+    fileobj['orig_name'] = paramTranscribeFile.input_file
+    fileobjs = [fileobj]
+    tb_indicator = whisper_inf.transcribe_file1(fileobjs, paramTranscribeFile.dd_model,
+        paramTranscribeFile.dd_lang, paramTranscribeFile.dd_subformat, paramTranscribeFile.cb_translate, progress=fapi_progress)
+    return {  # ì¸¡ì •ê²°ê³¼ ì½”ë“œ ë°?ë©”ì‹œì§€
+        'result_type': 0,
+        'result_msg': tb_indicator,
+    }
+
+import threading
+from fastapi import FastAPI, Request
+import uvicorn
+
+def run_server():
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+server_thread = threading.Thread(target=run_server)
+server_thread.start()
 
 if args.share:
     block.launch(share=True)
 else:
     block.launch()
+
