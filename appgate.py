@@ -26,8 +26,8 @@ class TranscribeFile(BaseModel):
     uuid :  Union[str, None] = None
     callbackurl : Union[str, None] = None
     userid : Union[str, None] = None
-    userno : Union[str, None] = None
-    itemno : Union[str, None] = None
+    userno : Union[int, None] = None
+    itemno : Union[int, None] = None
     orig_file : Union[str, None] = None
 
 from datetime import datetime
@@ -322,26 +322,6 @@ async def fastapi_transcribe_qlist():
     }
 
 
-
-@app.post('/transcribe_file')  # http://192.168.7.188:5001/transcribe_file
-async def fastapi_transcribe_file(paramTranscribeFile: TranscribeFile):
-    fileobj = {}
-    fileobj['orig_name'] = paramTranscribeFile.input_file
-    fileobj['name'] = paramTranscribeFile.input_file
-    fileobjs = [fileobj]
-    if paramTranscribeFile.dd_model is None or paramTranscribeFile.dd_model == '':
-        paramTranscribeFile.dd_model = 'large-v2'
-    if paramTranscribeFile.dd_subformat is None or paramTranscribeFile.dd_subformat == '':
-        paramTranscribeFile.dd_subformat = 'SRT'
-    if paramTranscribeFile.cb_translate == '':
-        paramTranscribeFile.cb_translate = False
-    tb_indicator = whisper_inf.transcribe_file1(fileobjs, paramTranscribeFile.dd_model,
-        paramTranscribeFile.dd_lang, paramTranscribeFile.dd_subformat, paramTranscribeFile.cb_translate, progress=fapi_progress)
-    
-    return {  # 측정결과 코드 오류 메시지
-        'result_type': 0,
-        'result_msg': tb_indicator,
-    }
 
 
 if __name__ == "__main__":
